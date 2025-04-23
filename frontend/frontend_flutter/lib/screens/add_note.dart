@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../styles/app_styles.dart';
 
 class AddNotePage extends StatefulWidget {
   const AddNotePage({super.key});
@@ -9,62 +11,131 @@ class AddNotePage extends StatefulWidget {
 }
 
 class _AddNotePageState extends State<AddNotePage> {
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _contentController = TextEditingController();
+  final _titleC = TextEditingController();
+  final _contentC = TextEditingController();
+
+  bool isPinned = false;
+  String importance = 'normal';
+  String? selectedFolder; // null = nincs mappa
+  List folders = [];
 
   String message = '';
 
-  Future<void> submitNote() async {
-    final title = _titleController.text.trim();
-    final content = _contentController.text.trim();
+  /* ---------- mappák lekérése ---------- */
+  @override
+  void initState() {
+    super.initState();
+    _fetchFolders();
+  }
+
+  Future<void> _fetchFolders() async {
+    final res = await http.get(
+      Uri.parse('https://app-in-progress-457709.lm.r.appspot.com/folders'),
+    );
+    if (res.statusCode == 200) setState(() => folders = jsonDecode(res.body));
+  }
+
+  /* ---------- küldés ---------- */
+  Future<void> _submit() async {
+    final title = _titleC.text.trim();
+    final content = _contentC.text.trim();
 
     if (title.isEmpty || content.isEmpty) {
-      setState(() {
-        message = 'Tölts ki minden mezőt!';
-      });
+      setState(() => message = 'Tölts ki minden mezőt!');
       return;
     }
 
-    final url = Uri.parse(
-      'https://app-in-progress-457709.lm.r.appspot.com/notes',
-    );
-    final response = await http.post(
-      url,
+    final res = await http.post(
+      Uri.parse('https://app-in-progress-457709.lm.r.appspot.com/notes'),
       headers: {'Content-Type': 'application/json'},
-      body: '{"title": "$title", "content": "$content"}',
+      body: jsonEncode({
+        'title': title,
+        'content': content,
+        'pinned': isPinned,
+        'importance': importance,
+        'folderId': selectedFolder, // lehet null
+      }),
     );
 
-    if (response.statusCode == 200) {
-      Navigator.pop(context, true); // visszatérés és frissítés
+    if (res.statusCode == 200) {
+      Navigator.pop(context, true); // frissítés kérés a hívónak
     } else {
-      setState(() {
-        message = 'Hiba történt (${response.statusCode})';
-      });
+      setState(() => message = 'Hiba (${res.statusCode})');
     }
   }
 
+  /* ---------- UI ---------- */
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Új jegyzet')),
+      backgroundColor: AppStyle.backgroundColor,
+      appBar: AppBar(
+        title: const Text('Új jegyzet'),
+        backgroundColor: AppStyle.backgroundColor,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
+        child: ListView(
           children: [
             TextField(
-              controller: _titleController,
+              controller: _titleC,
               decoration: const InputDecoration(labelText: 'Cím'),
             ),
             const SizedBox(height: 10),
             TextField(
-              controller: _contentController,
-              maxLines: 5,
+              controller: _contentC,
+              maxLines: 6,
               decoration: const InputDecoration(labelText: 'Tartalom'),
             ),
+
+            /* ---------- opcionális mappa ---------- */
             const SizedBox(height: 20),
-            ElevatedButton(onPressed: submitNote, child: const Text('Mentés')),
+            DropdownButtonFormField<String>(
+              value: selectedFolder,
+              hint: const Text('Mappa (opcionális)'),
+              dropdownColor: AppStyle.cardColor,
+              items:
+                  folders.map((f) {
+                    return DropdownMenuItem(
+                      value: f['id'].toString(),
+                      child: Text(f['name']),
+                    );
+                  }).toList(),
+              onChanged: (v) => setState(() => selectedFolder = v),
+            ),
+
+            /* ---------- pinned + importance ---------- */
             const SizedBox(height: 10),
-            Text(message),
+            Row(
+              children: [
+                const Text('Kitűzve:'),
+                Switch(
+                  activeColor: AppStyle.accentRed,
+                  value: isPinned,
+                  onChanged: (v) => setState(() => isPinned = v),
+                ),
+                const Spacer(),
+                const Text('Fontosság:'),
+                DropdownButton(
+                  value: importance,
+                  dropdownColor: AppStyle.cardColor,
+                  items:
+                      ['low', 'normal', 'high']
+                          .map(
+                            (l) => DropdownMenuItem(value: l, child: Text(l)),
+                          )
+                          .toList(),
+                  onChanged: (v) => setState(() => importance = v!),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+            ElevatedButton(onPressed: _submit, child: const Text('Mentés')),
+            if (message.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(message, style: const TextStyle(color: Colors.redAccent)),
+            ],
           ],
         ),
       ),
