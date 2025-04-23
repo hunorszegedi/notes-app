@@ -11,22 +11,23 @@ class AddNotePage extends StatefulWidget {
 class _AddNotePageState extends State<AddNotePage> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
+
   String message = '';
 
   Future<void> submitNote() async {
-    final String title = _titleController.text.trim();
-    final String content = _contentController.text.trim();
+    final title = _titleController.text.trim();
+    final content = _contentController.text.trim();
 
     if (title.isEmpty || content.isEmpty) {
       setState(() {
-        message = 'Kérlek tölts ki minden mezőt!';
+        message = 'Tölts ki minden mezőt!';
       });
       return;
     }
 
     final url = Uri.parse(
       'https://app-in-progress-457709.lm.r.appspot.com/notes',
-    ); // vagy saját backend URL
+    );
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
@@ -34,25 +35,20 @@ class _AddNotePageState extends State<AddNotePage> {
     );
 
     if (response.statusCode == 200) {
-      setState(() {
-        message = 'Jegyzet elmentve!';
-        _titleController.clear();
-        _contentController.clear();
-      });
+      Navigator.pop(context, true); // visszatérés és frissítés
     } else {
       setState(() {
         message = 'Hiba történt (${response.statusCode})';
       });
     }
-    Navigator.pop(context, true);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Új jegyzet hozzáadása')),
+      appBar: AppBar(title: const Text('Új jegyzet')),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             TextField(
@@ -62,8 +58,8 @@ class _AddNotePageState extends State<AddNotePage> {
             const SizedBox(height: 10),
             TextField(
               controller: _contentController,
-              decoration: const InputDecoration(labelText: 'Tartalom'),
               maxLines: 5,
+              decoration: const InputDecoration(labelText: 'Tartalom'),
             ),
             const SizedBox(height: 20),
             ElevatedButton(onPressed: submitNote, child: const Text('Mentés')),
