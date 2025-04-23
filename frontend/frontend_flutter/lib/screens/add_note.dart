@@ -94,16 +94,21 @@ class _AddNotePageState extends State<AddNotePage> {
               value: selectedFolder,
               hint: const Text('Mappa (opcionális)'),
               dropdownColor: AppStyle.cardColor,
-              items:
-                  folders.map((f) {
-                    return DropdownMenuItem(
-                      value: f['id'].toString(),
-                      child: Text(f['name']),
-                    );
-                  }).toList(),
-              onChanged: (v) => setState(() => selectedFolder = v),
+              decoration: const InputDecoration(labelText: 'Mappa'),
+              items: [
+                const DropdownMenuItem<String>(
+                  value: null,
+                  child: Text('Nincs mappa'),
+                ),
+                ...folders.map<DropdownMenuItem<String>>((f) {
+                  return DropdownMenuItem<String>(
+                    value: f['id'].toString(),
+                    child: Text(f['name']),
+                  );
+                }).toList(),
+              ],
+              onChanged: (value) => setState(() => selectedFolder = value),
             ),
-
             /* ---------- pinned + importance ---------- */
             const SizedBox(height: 10),
             Row(

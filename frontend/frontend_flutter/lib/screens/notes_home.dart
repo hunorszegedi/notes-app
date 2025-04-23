@@ -1,14 +1,15 @@
+/* lib/screens/notes_home.dart */
 import 'package:flutter/material.dart';
 import '../styles/app_styles.dart';
 import 'add_note.dart';
 import 'add_folder.dart';
-import 'note_detail.dart'; // 🆕
+import 'note_detail.dart';
+import 'manage_folders.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class NotesHome extends StatefulWidget {
   const NotesHome({super.key});
-
   @override
   State<NotesHome> createState() => _NotesHomeState();
 }
@@ -18,32 +19,41 @@ class _NotesHomeState extends State<NotesHome> {
   List folders = [];
   String? selectedFolderId; // null = Összes
 
-  /* --------- API-hívások --------- */
+  /* ------------ segédfüggvény: "" -> null, int -> String ------------ */
+  String? _normalize(dynamic id) {
+    if (id == null) return null;
+    final s = id.toString();
+    return s.isEmpty ? null : s;
+  }
+
+  String _fid(dynamic folder) => _normalize(folder['id']) ?? '';
+
+  /* -------------------- API-k -------------------- */
   Future<void> fetchNotes() async {
-    final res = await http.get(
+    final r = await http.get(
       Uri.parse('https://app-in-progress-457709.lm.r.appspot.com/notes'),
     );
-    if (res.statusCode == 200) setState(() => notes = jsonDecode(res.body));
+    if (r.statusCode == 200) setState(() => notes = jsonDecode(r.body));
   }
 
   Future<void> fetchFolders() async {
-    final res = await http.get(
+    final r = await http.get(
       Uri.parse('https://app-in-progress-457709.lm.r.appspot.com/folders'),
     );
-    if (res.statusCode == 200) setState(() => folders = jsonDecode(res.body));
+    if (r.statusCode == 200) setState(() => folders = jsonDecode(r.body));
   }
 
   Future<void> assignNote(String id, String? folderId) async {
-    final note = notes.firstWhere((n) => n['id'] == id);
+    final n = notes.firstWhere((e) => e['id'] == id);
     await http.put(
       Uri.parse('https://app-in-progress-457709.lm.r.appspot.com/notes/$id'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'title': note['title'],
-        'content': note['content'],
-        'pinned': note['pinned'],
-        'importance': note['importance'],
-        'folderId': folderId,
+        'title': n['title'],
+        'content': n['content'],
+        'pinned': n['pinned'],
+        'importance': n['importance'],
+        'folderId': folderId, // lehet null
       }),
     );
     fetchNotes();
@@ -58,55 +68,57 @@ class _NotesHomeState extends State<NotesHome> {
 
   @override
   Widget build(BuildContext context) {
-    final visible =
+    // szűrés
+    final vis =
         selectedFolderId == null
             ? notes
-            : notes.where((n) => n['folderId'] == selectedFolderId).toList();
+            : notes
+                .where((n) => _normalize(n['folderId']) == selectedFolderId)
+                .toList();
 
     return Scaffold(
       backgroundColor: AppStyle.backgroundColor,
       appBar: AppBar(
-        title: Text(
-          'NOTES',
-          style: Theme.of(context).appBarTheme.titleTextStyle,
-        ),
+        title: const Text('NOTES'),
         backgroundColor: AppStyle.backgroundColor,
       ),
 
-      /* --------- Szűrő ---------- */
+      /* ------------------ Szűrő ------------------ */
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(8),
             child: DropdownButton<String?>(
               isExpanded: true,
-              value: selectedFolderId,
+              value:
+                  folders.any((f) => _fid(f) == selectedFolderId)
+                      ? selectedFolderId
+                      : null, // ha közben törölték
               dropdownColor: AppStyle.cardColor,
-              hint: const Text(
-                'Összes',
-                style: TextStyle(color: AppStyle.accentWhite),
-              ),
               iconEnabledColor: AppStyle.accentWhite,
               items: [
-                const DropdownMenuItem(value: null, child: Text('Összes')),
+                const DropdownMenuItem(
+                  value: null,
+                  child: Text('Összes / nincs mappa'),
+                ),
                 ...folders.map(
                   (f) =>
-                      DropdownMenuItem(value: f['id'], child: Text(f['name'])),
+                      DropdownMenuItem(value: _fid(f), child: Text(f['name'])),
                 ),
               ],
-              onChanged: (val) => setState(() => selectedFolderId = val),
+              onChanged: (v) => setState(() => selectedFolderId = v),
             ),
           ),
 
-          /* --------- Lista ---------- */
+          /* ----------------- Lista ----------------- */
           Expanded(
             child:
-                visible.isEmpty
+                vis.isEmpty
                     ? const Center(child: CircularProgressIndicator())
                     : ListView.builder(
-                      itemCount: visible.length,
+                      itemCount: vis.length,
                       itemBuilder: (_, i) {
-                        final n = visible[i];
+                        final n = vis[i];
                         final firstLine =
                             (n['content'] ?? '').split('\n').first;
                         return Card(
@@ -119,14 +131,8 @@ class _NotesHomeState extends State<NotesHome> {
                             vertical: 6,
                           ),
                           child: ListTile(
-                            title: Text(
-                              n['title'] ?? '',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                            subtitle: Text(
-                              firstLine,
-                              style: Theme.of(context).textTheme.labelSmall,
-                            ),
+                            title: Text(n['title'] ?? ''),
+                            subtitle: Text(firstLine),
                             onTap: () async {
                               final changed = await Navigator.push(
                                 context,
@@ -141,20 +147,21 @@ class _NotesHomeState extends State<NotesHome> {
                               if (changed == true) fetchNotes();
                             },
                             trailing: PopupMenuButton<String?>(
+                              onSelected:
+                                  (fid) => assignNote(n['id'], _normalize(fid)),
                               icon: const Icon(
                                 Icons.more_vert,
                                 color: AppStyle.accentWhite,
                               ),
-                              onSelected: (fid) => assignNote(n['id'], fid),
                               itemBuilder:
                                   (_) => [
                                     const PopupMenuItem(
                                       value: null,
-                                      child: Text('Összes'),
+                                      child: Text('Összes / nincs mappa'),
                                     ),
                                     ...folders.map(
                                       (f) => PopupMenuItem(
-                                        value: f['id'],
+                                        value: _fid(f),
                                         child: Text(f['name']),
                                       ),
                                     ),
@@ -168,7 +175,7 @@ class _NotesHomeState extends State<NotesHome> {
         ],
       ),
 
-      /* --------- Lebegő gomb -------- */
+      /* -------------- FAB + bottom-sheet -------------- */
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add, color: AppStyle.accentWhite),
         onPressed: () async {
@@ -181,9 +188,11 @@ class _NotesHomeState extends State<NotesHome> {
                   children: [
                     _sheetItem('Új jegyzet', Icons.note_add, 'note'),
                     _sheetItem('Új mappa', Icons.create_new_folder, 'folder'),
+                    _sheetItem('Mappák kezelése', Icons.folder_open, 'manage'),
                   ],
                 ),
           );
+
           if (choice == 'note') {
             final ok = await Navigator.push(
               context,
@@ -196,15 +205,22 @@ class _NotesHomeState extends State<NotesHome> {
               MaterialPageRoute(builder: (_) => const AddFolderPage()),
             );
             if (ok == true) fetchFolders();
+          } else if (choice == 'manage') {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ManageFoldersPage()),
+            );
+            fetchFolders();
+            fetchNotes();
           }
         },
       ),
     );
   }
 
-  ListTile _sheetItem(String txt, IconData ic, String val) => ListTile(
-    leading: Icon(ic, color: AppStyle.accentWhite),
-    title: Text(txt, style: const TextStyle(color: AppStyle.accentWhite)),
-    onTap: () => Navigator.pop(context, val),
+  ListTile _sheetItem(String t, IconData i, String v) => ListTile(
+    leading: Icon(i, color: AppStyle.accentWhite),
+    title: Text(t, style: const TextStyle(color: AppStyle.accentWhite)),
+    onTap: () => Navigator.pop(context, v),
   );
 }
