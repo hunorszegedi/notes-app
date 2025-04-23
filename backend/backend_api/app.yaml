@@ -1,0 +1,2 @@
+runtime: java17
+entrypoint: java -jar target/backend_api-1.0-SNAPSHOT-jar-with-dependencies.jar
