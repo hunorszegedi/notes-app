@@ -16,6 +16,18 @@ class NotesHome extends StatefulWidget {
 }
 
 class _NotesHomeState extends State<NotesHome> {
+  String priorityToLabel(int priority) {
+    switch (priority) {
+      case 2:
+        return 'high';
+      case 1:
+        return 'normal';
+      case 0:
+      default:
+        return 'low';
+    }
+  }
+
   List notes = [];
   List folders = [];
 
@@ -54,7 +66,7 @@ class _NotesHomeState extends State<NotesHome> {
         'title': n['title'],
         'content': n['content'],
         'pinned': n['pinned'],
-        'priority': n['importance'],
+        'priority': n['priority'],
         'folderId': folderId,
       }),
     );
@@ -81,7 +93,7 @@ class _NotesHomeState extends State<NotesHome> {
               q.isEmpty ||
               (n['title'] ?? '').toString().toLowerCase().contains(q) ||
               (n['content'] ?? '').toString().toLowerCase().contains(q);
-          final imp = (n['importance'] ?? 'normal').toString();
+          final imp = priorityToLabel(n['priority'] ?? 1);
           final byImportance =
               importanceFilter == 'all' || imp == importanceFilter;
           return byFolder && bySearch && byImportance;
@@ -97,16 +109,6 @@ class _NotesHomeState extends State<NotesHome> {
         title: const Text('NOTES', style: TextStyle(letterSpacing: 2)),
         backgroundColor: AppStyle.background,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () async {
-              final q = await showSearch<String>(
-                context: context,
-                delegate: _NoteSearchDelegate(),
-              );
-              if (q != null) setState(() => searchQuery = q);
-            },
-          ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.sort),
             onSelected: (v) => setState(() => importanceFilter = v),
@@ -256,7 +258,7 @@ class _NotesHomeState extends State<NotesHome> {
 
   Widget _noteCard(Map n) {
     final first = (n['content'] ?? '').split('\n').first;
-    final imp = (n['importance'] ?? 'normal').toString();
+    final imp = priorityToLabel(n['priority'] ?? 1);
     final col = AppStyle.importanceColor(imp);
     return InkWell(
       onTap: () async {
@@ -309,22 +311,105 @@ class _NotesHomeState extends State<NotesHome> {
                     ),
                   ),
                   const Spacer(),
-                  PopupMenuButton<String?>(
+                  PopupMenuButton<String>(
                     icon: const Icon(
                       Icons.more_vert,
                       color: AppStyle.textPrimary,
                     ),
-                    onSelected: (fid) => assignNote(n['id'], _normalize(fid)),
+                    onSelected: (value) async {
+                      if (value == 'toggle_pin') {
+                        final updated = Map<String, dynamic>.from(n);
+                        updated['pinned'] = !(n['pinned'] == true);
+                        await http.put(
+                          Uri.parse(
+                            'https://app-in-progress-457709.lm.r.appspot.com/notes/${n['id']}',
+                          ),
+                          headers: {'Content-Type': 'application/json'},
+                          body: jsonEncode(updated),
+                        );
+                        fetchNotes();
+                      } else if (value == 'delete') {
+                        await http.delete(
+                          Uri.parse(
+                            'https://app-in-progress-457709.lm.r.appspot.com/notes/${n['id']}',
+                          ),
+                        );
+                        fetchNotes();
+                      } else if (value == 'set_low' ||
+                          value == 'set_normal' ||
+                          value == 'set_high') {
+                        final updated = Map<String, dynamic>.from(n);
+                        updated['priority'] =
+                            value == 'set_low'
+                                ? 0
+                                : value == 'set_normal'
+                                ? 1
+                                : 2;
+                        await http.put(
+                          Uri.parse(
+                            'https://app-in-progress-457709.lm.r.appspot.com/notes/${n['id']}',
+                          ),
+                          headers: {'Content-Type': 'application/json'},
+                          body: jsonEncode(updated),
+                        );
+                        fetchNotes();
+                      } else {
+                        assignNote(n['id'], _normalize(value));
+                      }
+                    },
                     itemBuilder:
                         (_) => [
-                          const PopupMenuItem(
+                          const PopupMenuItem<String>(
+                            value: 'info',
+                            enabled: false,
+                            child: Text('Melyik mappába szeretnéd?'),
+                          ),
+                          const PopupMenuItem<String>(
                             value: null,
                             child: Text('Nincs mappa'),
                           ),
                           ...folders.map(
-                            (f) => PopupMenuItem(
+                            (f) => PopupMenuItem<String>(
                               value: _fid(f),
                               child: Text(f['name']),
+                            ),
+                          ),
+                          const PopupMenuDivider(),
+
+                          // Prioritás beállítás
+                          const PopupMenuItem<String>(
+                            value: 'info2',
+                            enabled: false,
+                            child: Text('Prioritás módosítása:'),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'set_low',
+                            child: Text('Alacsony (low)'),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'set_normal',
+                            child: Text('Normál (normal)'),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'set_high',
+                            child: Text('Magas (high)'),
+                          ),
+
+                          const PopupMenuDivider(),
+
+                          PopupMenuItem<String>(
+                            value: 'toggle_pin',
+                            child: Text(
+                              n['pinned'] == true
+                                  ? 'Levétel a főoldalról'
+                                  : 'Kitűzés',
+                            ),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'delete',
+                            child: Text(
+                              'Törlés',
+                              style: TextStyle(color: Colors.redAccent),
                             ),
                           ),
                         ],

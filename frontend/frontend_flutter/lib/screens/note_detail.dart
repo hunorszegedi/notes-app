@@ -5,7 +5,7 @@ import 'dart:convert';
 
 class NoteDetailPage extends StatefulWidget {
   final Map note;
-  final List folders; // már lekért listát átadjuk
+  final List folders;
   const NoteDetailPage({super.key, required this.note, required this.folders});
 
   @override
@@ -14,10 +14,10 @@ class NoteDetailPage extends StatefulWidget {
 
 class _NoteDetailPageState extends State<NoteDetailPage> {
   late TextEditingController _titleC, _contentC;
-  String? selectedFolder; // null = nincs mappa
+  String? selectedFolder;
   bool pinned = false;
+  int _priority = 1; // 0 = low, 1 = normal, 2 = high
 
-  /* helper: üres string -> null, int -> String */
   String? _norm(dynamic id) {
     if (id == null) return null;
     final s = id.toString();
@@ -31,6 +31,7 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
     _contentC = TextEditingController(text: widget.note['content']);
     selectedFolder = _norm(widget.note['folderId']);
     pinned = widget.note['pinned'] == true;
+    _priority = widget.note['priority'] ?? 1;
   }
 
   Future<void> _save() async {
@@ -43,8 +44,8 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
         'title': _titleC.text,
         'content': _contentC.text,
         'pinned': pinned,
-        'priority': widget.note['importance'],
-        'folderId': selectedFolder, // lehet null
+        'priority': _priority,
+        'folderId': selectedFolder,
       }),
     );
     if (context.mounted) Navigator.pop(context, true);
@@ -123,6 +124,27 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
                     ),
                   ],
                   onChanged: (v) => setState(() => selectedFolder = v),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                const Text(
+                  'Fontosság:',
+                  style: TextStyle(color: AppStyle.textPrimary),
+                ),
+                const SizedBox(width: 12),
+                DropdownButton<int>(
+                  value: _priority,
+                  dropdownColor: AppStyle.surface,
+                  style: const TextStyle(color: AppStyle.textPrimary),
+                  items: const [
+                    DropdownMenuItem(value: 0, child: Text('Alacsony')),
+                    DropdownMenuItem(value: 1, child: Text('Normál')),
+                    DropdownMenuItem(value: 2, child: Text('Magas')),
+                  ],
+                  onChanged: (v) => setState(() => _priority = v!),
                 ),
               ],
             ),

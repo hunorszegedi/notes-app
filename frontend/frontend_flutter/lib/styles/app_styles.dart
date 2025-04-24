@@ -1,23 +1,23 @@
 /* lib/styles/app_styles.dart
-   – minimal-cyber / retro-terminal dizájn
+   – CYBERPUNK // TERMINAL // RETROFUTURE
 */
 import 'package:flutter/material.dart';
 
 class AppStyle {
-  /* ───────── PALETTA ───────── */
-  static const background = Color(0xFF0A0A0C);
-  static const surface = Color(0xFF18181B);
-  static const accentRed = Color(0xFFE53935);
-  static const accentYellow = Color(0xFFFFC400);
-  static const accentGreen = Color(0xFF00C853);
-  static const textPrimary = Color(0xFFEFEFEF);
-  static const textSecondary = Color(0xFF8A8A8E);
+  /* ───────── COLOR DNA ───────── */
+  static const background = Color(0xFF090C10); // mély fekete-kék
+  static const surface = Color(0xFF12171C); // sötét felület
+  static const accentRed = Color(0xFFFF3D00); // neon narancs-vörös
+  static const accentYellow = Color(0xFFFFD600); // savas sárga
+  static const accentGreen = Color(0xFF00FFAB); // zöld holografikus
+  static const textPrimary = Color(0xFFEBEFF2); // világos text
+  static const textSecondary = Color(0xFF6C7380); // tompa szürke
 
-  /* ───────── TYPO ───────── */
-  static const String fontMain = 'DotMatrix';
-  static const String fontMono = 'JetBrainsMono';
+  /* ───────── TYPEFACES ───────── */
+  static const String fontMain = 'Orbitron'; // futurisztikus fő font
+  static const String fontMono = 'JetBrainsMono'; // kódhoz
 
-  /* ───────── TÉMA ───────── */
+  /* ───────── THEMATIC ENGINE ───────── */
   static final ThemeData darkTheme = ThemeData(
     brightness: Brightness.dark,
     scaffoldBackgroundColor: background,
@@ -29,18 +29,18 @@ class AppStyle {
       elevation: 0,
       titleTextStyle: TextStyle(
         fontFamily: fontMain,
-        fontSize: 24,
-        letterSpacing: 2,
-        color: textPrimary,
+        fontSize: 22,
+        letterSpacing: 2.0,
+        color: accentGreen,
       ),
-      iconTheme: IconThemeData(color: textPrimary),
+      iconTheme: IconThemeData(color: accentGreen),
     ),
 
     textTheme: const TextTheme(
       titleLarge: TextStyle(
         fontFamily: fontMain,
-        fontSize: 22,
-        color: textPrimary,
+        fontSize: 20,
+        color: accentGreen,
       ),
       bodyMedium: TextStyle(
         fontFamily: fontMono,
@@ -57,63 +57,63 @@ class AppStyle {
     cardColor: surface,
     cardTheme: CardTheme(
       color: surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      elevation: 4,
+      shadowColor: accentGreen.withOpacity(0.3),
     ),
 
-    inputDecorationTheme: const InputDecorationTheme(
+    inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: surface,
-      labelStyle: TextStyle(color: textSecondary),
+      labelStyle: const TextStyle(color: accentYellow),
       border: OutlineInputBorder(
-        borderSide: BorderSide(color: accentRed, width: .8),
-        borderRadius: BorderRadius.all(Radius.circular(8)),
+        borderSide: const BorderSide(color: accentGreen, width: 1),
+        borderRadius: BorderRadius.circular(10),
       ),
       focusedBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: accentRed, width: 1.2),
-        borderRadius: BorderRadius.all(Radius.circular(8)),
+        borderSide: const BorderSide(color: accentRed, width: 1.5),
+        borderRadius: BorderRadius.circular(10),
       ),
     ),
 
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: accentRed,
-        foregroundColor: textPrimary,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        backgroundColor: accentGreen,
+        foregroundColor: background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         textStyle: const TextStyle(
           fontFamily: fontMono,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.bold,
         ),
       ),
     ),
+
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
       backgroundColor: accentRed,
       foregroundColor: textPrimary,
-      shape: StadiumBorder(),
+      shape: CircleBorder(),
     ),
 
-    dropdownMenuTheme: const DropdownMenuThemeData(
+    dropdownMenuTheme: DropdownMenuThemeData(
       menuStyle: MenuStyle(
-        backgroundColor: MaterialStatePropertyAll(surface),
-        elevation: MaterialStatePropertyAll(4),
+        backgroundColor: MaterialStateProperty.all(surface),
+        elevation: MaterialStateProperty.all(4),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(8)),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
       ),
     ),
 
     snackBarTheme: const SnackBarThemeData(
       backgroundColor: surface,
-      contentTextStyle: TextStyle(color: textPrimary, fontFamily: fontMono),
+      contentTextStyle: TextStyle(color: accentYellow, fontFamily: fontMono),
       actionTextColor: accentRed,
     ),
   );
 
-  /* priority badge színek */
+  /* ───────── STATUS COLOR MAPPER ───────── */
   static Color importanceColor(String? imp) {
     switch (imp) {
       case 'high':

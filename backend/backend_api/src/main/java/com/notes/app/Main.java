@@ -33,7 +33,7 @@ public class Main {
             // alapértékek, ha nem adott meg semmit
             if (note.getFolderId() == null) note.setFolderId("");
             if (note.getPriority() == 0) note.setPriority(0); // pl. 0 = alacsony
-            note.setPinned(false); // új jegyzet nem kiemelt
+//            note.setPinned(false); // új jegyzet nem kiemelt
 
             KeyFactory keyFactory = datastore.newKeyFactory().setKind(KIND);
             FullEntity<IncompleteKey> entity = Entity.newBuilder(keyFactory.newKey())

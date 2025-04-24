@@ -37,6 +37,18 @@ class _AddNotePageState extends State<AddNotePage> {
 
   /* ---------- küldés ---------- */
   Future<void> _submit() async {
+    int _priorityLevel(String importance) {
+      switch (importance) {
+        case 'high':
+          return 2;
+        case 'normal':
+          return 1;
+        case 'low':
+        default:
+          return 0;
+      }
+    }
+
     final title = _titleC.text.trim();
     final content = _contentC.text.trim();
 
@@ -52,7 +64,7 @@ class _AddNotePageState extends State<AddNotePage> {
         'title': title,
         'content': content,
         'pinned': isPinned,
-        'priority': importance,
+        'priority': _priorityLevel(importance),
         'folderId': selectedFolder, // lehet null
       }),
     );
