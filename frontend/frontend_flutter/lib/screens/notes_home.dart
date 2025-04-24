@@ -105,6 +105,18 @@ class _NotesHomeState extends State<NotesHome> {
           return byFolder && byText && byPrio;
         }).toList();
 
+    // sort by pinned first, then by priority, then by title
+    filtered.sort((a, b) {
+      if (a['pinned'] == true && b['pinned'] != true) return -1;
+      if (a['pinned'] != true && b['pinned'] == true) return 1;
+      if ((a['priority'] ?? 1) != (b['priority'] ?? 1)) {
+        return (b['priority'] ?? 1).compareTo(a['priority'] ?? 1);
+      }
+      return (a['title'] ?? '').toString().compareTo(
+        (b['title'] ?? '').toString(),
+      );
+    });
+
     final pinned = filtered.where((n) => n['pinned'] == true).toList();
     final others = filtered.where((n) => n['pinned'] != true).toList();
 
