@@ -17,17 +17,17 @@ class NotesHome extends StatefulWidget {
 }
 
 class _NotesHomeState extends State<NotesHome> {
-  /* ── csak törlés SFX ── */
+  // delete sfx
   final AudioPlayer _deleteSfx = AudioPlayer();
 
-  /* ── állapot ── */
+  // state variables
   List notes = [];
   List folders = [];
   String? selectedFolderId; // null → összes
   String searchQuery = '';
   String importanceFilter = 'all'; // all | high | normal | low
 
-  /* ── segédek ── */
+  // helper functions
   String? _norm(dynamic id) {
     final s = id?.toString() ?? '';
     return s.isEmpty ? null : s;
@@ -41,7 +41,7 @@ class _NotesHomeState extends State<NotesHome> {
     _ => 'low',
   };
 
-  /* ── REST ── */
+  // REST API functions
   Future<void> _fetchNotes() async {
     final r = await http.get(
       Uri.parse('https://app-in-progress-457709.lm.r.appspot.com/notes'),
@@ -82,10 +82,10 @@ class _NotesHomeState extends State<NotesHome> {
     _fetchFolders();
   }
 
-  /* ──────────────────────────────────────── UI ── */
+  /* ───────────────────────── UI ── */
   @override
   Widget build(BuildContext context) {
-    /* ---- szűrés ---- */
+    // check if folders are loaded
     final filtered =
         notes.where((n) {
           final byFolder =
@@ -128,7 +128,7 @@ class _NotesHomeState extends State<NotesHome> {
                 (_) => [
                   _prioMenuItem(
                     value: 'all',
-                    label: 'Minden',
+                    label: 'All notes',
                     color: Colors.grey.shade600,
                   ),
                   _prioMenuItem(
@@ -153,7 +153,7 @@ class _NotesHomeState extends State<NotesHome> {
 
       body: Column(
         children: [
-          /* ---- mappa dropdown ---- */
+          // folder selector & search bar
           Padding(
             padding: const EdgeInsets.all(8),
             child: DropdownButton<String?>(
@@ -167,7 +167,7 @@ class _NotesHomeState extends State<NotesHome> {
               items: [
                 const DropdownMenuItem(
                   value: null,
-                  child: Text('Összes / nincs mappa'),
+                  child: Text('All / no folder'),
                 ),
                 ...folders.map(
                   (f) =>
@@ -178,13 +178,13 @@ class _NotesHomeState extends State<NotesHome> {
             ),
           ),
 
-          /* ---- keresőmező ---- */
+          // search bar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             child: TextField(
               style: GoogleFonts.orbitron(color: AppStyle.textPrimary),
               decoration: InputDecoration(
-                hintText: 'Keresés...',
+                hintText: 'Search...',
                 hintStyle: GoogleFonts.orbitron(color: AppStyle.textSecondary),
                 prefixIcon: const Icon(
                   Icons.search,
@@ -201,7 +201,7 @@ class _NotesHomeState extends State<NotesHome> {
             ),
           ),
 
-          /* ---- lista ---- */
+          // search results
           Expanded(
             child: ListView(
               padding: const EdgeInsets.only(bottom: 80),
@@ -220,7 +220,7 @@ class _NotesHomeState extends State<NotesHome> {
         ],
       ),
 
-      /* ---- FAB ---- */
+      // floating action button
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppStyle.accentGreen,
         child: const Icon(Icons.add, color: Colors.white),
@@ -232,9 +232,9 @@ class _NotesHomeState extends State<NotesHome> {
                 (_) => Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _sheetItem('Új jegyzet', Icons.note_add, 'note'),
-                    _sheetItem('Új mappa', Icons.create_new_folder, 'folder'),
-                    _sheetItem('Mappák kezelése', Icons.folder_open, 'manage'),
+                    _sheetItem('New Note', Icons.note_add, 'note'),
+                    _sheetItem('New Folder', Icons.create_new_folder, 'folder'),
+                    _sheetItem('Manage Folders', Icons.folder_open, 'manage'),
                   ],
                 ),
           );
@@ -266,7 +266,7 @@ class _NotesHomeState extends State<NotesHome> {
     );
   }
 
-  /* ── helper widgetek ── */
+  // section header for pinned and all notes
   Widget _sectionHeader(String t) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     child: Text(
@@ -374,35 +374,33 @@ class _NotesHomeState extends State<NotesHome> {
     );
   }
 
-  /* ---- alsó-sheet (mappa / pin / prio / törlés) ---- */
+  // show options for note (edit, delete, etc.)
   Future<void> _showOptions(Map note) async {
     final currentPrio = note['priority'] ?? 1;
 
     await showModalBottomSheet(
       context: context,
       backgroundColor: AppStyle.surface,
-      // ← ❶ engedd teljes képernyőn nyúlni
       isScrollControlled: true,
       builder:
           (_) => DraggableScrollableSheet(
-            // - a “fül” nélkül teljes magasságot is elfoglalhat
-            expand: false, // felhúzható, de nem kötelező teljesen
-            initialChildSize: 0.65, // induljon ~65 %-on (ízlés szerint)
+            expand: false,
+            initialChildSize: 0.65,
             minChildSize: 0.4,
             maxChildSize: 0.95,
             builder:
                 (_, controller) => ListView(
-                  controller: controller, // ❷ scroll-kontroller
+                  controller: controller,
                   children: [
                     ListTile(
                       title: Text(
-                        'Melyik mappába szeretnéd?',
+                        'Select folder:',
                         style: GoogleFonts.orbitron(),
                       ),
                     ),
                     ListTile(
                       leading: const Icon(Icons.inbox),
-                      title: Text('Nincs mappa', style: GoogleFonts.orbitron()),
+                      title: Text('No folder', style: GoogleFonts.orbitron()),
                       onTap: () {
                         _updateNote({...note, 'folderId': null});
                         Navigator.pop(context);
@@ -428,9 +426,7 @@ class _NotesHomeState extends State<NotesHome> {
                             : Icons.push_pin_outlined,
                       ),
                       title: Text(
-                        note['pinned'] == true
-                            ? 'Levétel a főoldalról'
-                            : 'Kitűzés',
+                        note['pinned'] == true ? 'Unpin' : 'Pin',
                         style: GoogleFonts.orbitron(),
                       ),
                       onTap: () {
@@ -446,7 +442,7 @@ class _NotesHomeState extends State<NotesHome> {
 
                     ListTile(
                       title: Text(
-                        'Prioritás',
+                        'Priority',
                         style: GoogleFonts.orbitron(
                           fontWeight: FontWeight.bold,
                         ),
@@ -471,19 +467,60 @@ class _NotesHomeState extends State<NotesHome> {
                       ),
 
                     const Divider(),
-
                     ListTile(
                       leading: const Icon(
                         Icons.delete,
-                        color: Colors.redAccent,
+                        color: AppStyle.accentRed,
                       ),
                       title: Text(
-                        'Törlés',
-                        style: GoogleFonts.orbitron(color: Colors.redAccent),
+                        'Delete',
+                        style: GoogleFonts.orbitron(color: AppStyle.accentRed),
                       ),
-                      onTap: () {
-                        _deleteNote(note['id']);
-                        Navigator.pop(context);
+                      onTap: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder:
+                              (_) => AlertDialog(
+                                backgroundColor: AppStyle.surface,
+                                title: Text(
+                                  'CONFIRM DELETE?',
+                                  style: GoogleFonts.orbitron(
+                                    color: AppStyle.accentRed,
+                                  ),
+                                ),
+                                content: Text(
+                                  'This note will be permanently deleted.',
+                                  style: GoogleFonts.orbitron(
+                                    color: AppStyle.textSecondary,
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed:
+                                        () => Navigator.pop(context, false),
+                                    child: Text(
+                                      'CANCEL',
+                                      style: GoogleFonts.orbitron(),
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed:
+                                        () => Navigator.pop(context, true),
+                                    child: Text(
+                                      'DELETE',
+                                      style: GoogleFonts.orbitron(
+                                        color: AppStyle.accentRed,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                        );
+
+                        if (confirm == true) {
+                          _deleteNote(note['id']);
+                          Navigator.pop(context);
+                        }
                       },
                     ),
                   ],
@@ -492,14 +529,14 @@ class _NotesHomeState extends State<NotesHome> {
     );
   }
 
-  /* ---- alsó-sheet választó elem ---- */
+  // sheet item for floating action button
   ListTile _sheetItem(String t, IconData i, String v) => ListTile(
     leading: Icon(i, color: AppStyle.textPrimary),
     title: Text(t, style: GoogleFonts.orbitron(color: AppStyle.textPrimary)),
     onTap: () => Navigator.pop(context, v),
   );
 
-  /* ---- színes pötty  PopupMenu-hez ---- */
+  // priority menu item for popup menu
   PopupMenuItem<String> _prioMenuItem({
     required String value,
     required String label,

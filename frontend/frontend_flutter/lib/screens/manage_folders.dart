@@ -1,6 +1,3 @@
-/*  lib/screens/manage_folders.dart
-    – CYBER-geek folder manager (Orbitron everywhere)  */
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -89,7 +86,7 @@ class _ManageFoldersPageState extends State<ManageFoldersPage> {
                                   ),
                                 ),
                                 content: Text(
-                                  'A mappa összes jegyzete is elvész!',
+                                  'All notes in the folder will also be lost!',
                                   style: GoogleFonts.orbitron(
                                     color: AppStyle.textSecondary,
                                   ),

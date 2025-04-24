@@ -1,5 +1,3 @@
-/*  lib/screens/note_detail.dart
-    – cyber-geek hangulat // Orbitron everywhere  */
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -22,11 +20,11 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
   late final TextEditingController _titleC;
   late final TextEditingController _contentC;
 
-  String? selectedFolder; // null → nincs mappa
+  String? selectedFolder;
   bool pinned = false;
   int _priority = 1; // 0 low | 1 normal | 2 high
 
-  /* ── segédek ── */
+  // helper function to normalize folderId
   String? _norm(dynamic id) {
     final s = id?.toString() ?? '';
     return s.isEmpty ? null : s;
@@ -69,7 +67,8 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
     if (mounted) Navigator.pop(context, true);
   }
 
-  /* ── festett pötty a prior-dropdownhoz ── */
+  /* ── colored dot ── */
+  /// Priority dot for the dropdown menu.
   Widget _prioDot(Color c) => Container(
     width: 10,
     height: 10,
@@ -85,7 +84,7 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
       appBar: AppBar(
         backgroundColor: AppStyle.background,
         title: Text(
-          'NOTE  //  DETAIL',
+          'DETAILS',
           style: GoogleFonts.orbitron(
             color: AppStyle.accentGreen,
             letterSpacing: 1.4,
@@ -94,8 +93,42 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.delete, color: AppStyle.accentRed),
-            tooltip: 'Delete',
-            onPressed: _delete,
+            tooltip: 'Delete note',
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder:
+                    (_) => AlertDialog(
+                      backgroundColor: AppStyle.surface,
+                      title: Text(
+                        'CONFIRM DELETE?',
+                        style: GoogleFonts.orbitron(color: AppStyle.accentRed),
+                      ),
+                      content: Text(
+                        'This note will be permanently deleted.',
+                        style: GoogleFonts.orbitron(
+                          color: AppStyle.textSecondary,
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: Text('CANCEL', style: GoogleFonts.orbitron()),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: Text(
+                            'DELETE',
+                            style: GoogleFonts.orbitron(
+                              color: AppStyle.accentRed,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+              );
+              if (confirm == true) _delete();
+            },
           ),
         ],
       ),
@@ -103,32 +136,32 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
-            /* ---- cím ---- */
+            /* ---- title ---- */
             TextField(
               controller: _titleC,
               style: GoogleFonts.orbitron(color: AppStyle.textPrimary),
               decoration: InputDecoration(
-                labelText: 'CÍM',
+                labelText: 'TITLE',
                 labelStyle: GoogleFonts.orbitron(color: AppStyle.textSecondary),
               ),
             ),
 
             const SizedBox(height: 10),
 
-            /* ---- tartalom ---- */
+            /* --- content ---- */
             TextField(
               controller: _contentC,
               maxLines: 8,
               style: GoogleFonts.orbitron(color: AppStyle.textPrimary),
               decoration: InputDecoration(
-                labelText: 'TARTALOM',
+                labelText: 'CONTENT',
                 labelStyle: GoogleFonts.orbitron(color: AppStyle.textSecondary),
               ),
             ),
 
             const SizedBox(height: 24),
 
-            /* ---- PIN + MAPPA ---- */
+            /* ---- PIN + FOLDER ---- */
             Row(
               children: [
                 Text(
@@ -151,14 +184,14 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
                           ? selectedFolder
                           : null,
                   hint: Text(
-                    'MAPPA',
+                    'FOLDER',
                     style: GoogleFonts.orbitron(color: AppStyle.textPrimary),
                   ),
                   style: GoogleFonts.orbitron(color: AppStyle.textPrimary),
                   items: [
                     const DropdownMenuItem(
                       value: null,
-                      child: Text('Nincs mappa'),
+                      child: Text('No folder'),
                     ),
                     ...widget.folders.map(
                       (f) => DropdownMenuItem(

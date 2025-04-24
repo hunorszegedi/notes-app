@@ -1,6 +1,3 @@
-/*  lib/screens/add_note.dart
-    – CYBER-ORB  NOTE  CREATOR  */
-
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -103,7 +100,7 @@ class _AddNotePageState extends State<AddNotePage> {
     if (r.statusCode == 200) {
       if (context.mounted) Navigator.pop(context, true);
     } else {
-      setState(() => _msg = 'Hiba (${r.statusCode})');
+      setState(() => _msg = 'ERROR (${r.statusCode})');
     }
   }
 
@@ -131,7 +128,7 @@ class _AddNotePageState extends State<AddNotePage> {
             TextField(
               controller: _titleC,
               style: GoogleFonts.orbitron(color: AppStyle.textPrimary),
-              decoration: _input('Cím'),
+              decoration: _input('Title'),
             ),
             const SizedBox(height: 10),
 
@@ -140,7 +137,7 @@ class _AddNotePageState extends State<AddNotePage> {
               controller: _contentC,
               maxLines: 6,
               style: GoogleFonts.orbitron(color: AppStyle.textPrimary),
-              decoration: _input('Tartalom'),
+              decoration: _input('Content'),
             ),
 
             /* —— FOLDER —— */
@@ -149,15 +146,15 @@ class _AddNotePageState extends State<AddNotePage> {
               value: _selectedFolder,
               dropdownColor: AppStyle.surface,
               style: GoogleFonts.orbitron(color: AppStyle.textPrimary),
-              decoration: _input('Mappa'),
+              decoration: _input('Folder'),
               hint: Text(
-                'Mappa (opcionális)',
+                'Folder (optional)',
                 style: GoogleFonts.orbitron(color: AppStyle.textSecondary),
               ),
               items: [
                 DropdownMenuItem<String>(
                   value: null,
-                  child: Text('Nincs mappa', style: GoogleFonts.orbitron()),
+                  child: Text('No folder', style: GoogleFonts.orbitron()),
                 ),
                 ..._folders.map<DropdownMenuItem<String>>(
                   (f) => DropdownMenuItem<String>(
@@ -181,7 +178,7 @@ class _AddNotePageState extends State<AddNotePage> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Kitűzve:', style: GoogleFonts.orbitron()),
+                    Text('Pin:', style: GoogleFonts.orbitron()),
                     Switch(
                       value: _pinned,
                       activeColor: AppStyle.accentYellow,
@@ -193,7 +190,7 @@ class _AddNotePageState extends State<AddNotePage> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Fontosság:', style: GoogleFonts.orbitron()),
+                    Text('Priority:', style: GoogleFonts.orbitron()),
                     const SizedBox(width: 6),
                     DropdownButton<String>(
                       value: _importance,
@@ -215,7 +212,7 @@ class _AddNotePageState extends State<AddNotePage> {
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _submit,
-              child: Text('MENTÉS', style: GoogleFonts.orbitron()),
+              child: Text('SAVE', style: GoogleFonts.orbitron()),
             ),
             if (_msg.isNotEmpty) ...[
               const SizedBox(height: 10),

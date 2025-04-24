@@ -1,18 +1,15 @@
-/* lib/styles/app_styles.dart
-   – CYBERPUNK // TERMINAL // RETROFUTURE
-*/
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppStyle {
   /* ───────── COLOR DNA ───────── */
-  static const background = Color(0xFF090C10); // mély fekete-kék
-  static const surface = Color(0xFF12171C); // sötét felület
-  static const accentRed = Color(0xFFFF3D00); // neon narancs-vörös
-  static const accentYellow = Color(0xFFFFD600); // savas sárga
-  static const accentGreen = Color(0xFF00FFAB); // zöld holografikus
-  static const textPrimary = Color(0xFFEBEFF2); // világos text
-  static const textSecondary = Color(0xFF6C7380); // tompa szürke
+  static const background = Color(0xFF090C10);
+  static const surface = Color(0xFF12171C);
+  static const accentRed = Color(0xFFFF3D00);
+  static const accentYellow = Color(0xFFFFD600);
+  static const accentGreen = Color(0xFF00FFAB);
+  static const textPrimary = Color(0xFFEBEFF2);
+  static const textSecondary = Color(0xFF6C7380);
 
   /* ───────── STATUS COLOR MAPPER ───────── */
   static Color importanceColor(String? imp) {

@@ -1,6 +1,3 @@
-/*  lib/screens/add_folder.dart
-    – create new FOLDER in neon-retro style  */
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -24,7 +21,7 @@ class _AddFolderPageState extends State<AddFolderPage> {
     final name = _nameC.text.trim();
 
     if (name.isEmpty) {
-      setState(() => _msg = 'Adj meg mappanevet!');
+      setState(() => _msg = 'Please enter a folder name!');
       return;
     }
 
@@ -37,7 +34,7 @@ class _AddFolderPageState extends State<AddFolderPage> {
     if (r.statusCode == 200) {
       if (context.mounted) Navigator.pop(context, true);
     } else {
-      setState(() => _msg = 'Hiba (${r.statusCode})');
+      setState(() => _msg = 'ERROR (${r.statusCode})');
     }
   }
 
@@ -65,7 +62,7 @@ class _AddFolderPageState extends State<AddFolderPage> {
               controller: _nameC,
               style: GoogleFonts.orbitron(color: AppStyle.textPrimary),
               decoration: InputDecoration(
-                labelText: 'Mappa neve',
+                labelText: 'Folder name',
                 labelStyle: GoogleFonts.orbitron(color: AppStyle.textSecondary),
                 filled: true,
                 fillColor: AppStyle.surface,
@@ -80,7 +77,7 @@ class _AddFolderPageState extends State<AddFolderPage> {
             /* ---- SAVE ---- */
             ElevatedButton(
               onPressed: _submitFolder,
-              child: Text('MENTÉS', style: GoogleFonts.orbitron()),
+              child: Text('SAVE', style: GoogleFonts.orbitron()),
             ),
 
             if (_msg.isNotEmpty) ...[
