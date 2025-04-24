@@ -1,11 +1,16 @@
-import 'package:flutter/material.dart';
-import '../styles/app_styles.dart';
-import 'package:http/http.dart' as http;
+/*  lib/screens/note_detail.dart
+    – cyber-geek hangulat // Orbitron everywhere  */
 import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
+
+import '../styles/app_styles.dart';
 
 class NoteDetailPage extends StatefulWidget {
   final Map note;
   final List folders;
+
   const NoteDetailPage({super.key, required this.note, required this.folders});
 
   @override
@@ -13,14 +18,17 @@ class NoteDetailPage extends StatefulWidget {
 }
 
 class _NoteDetailPageState extends State<NoteDetailPage> {
-  late TextEditingController _titleC, _contentC;
-  String? selectedFolder;
-  bool pinned = false;
-  int _priority = 1; // 0 = low, 1 = normal, 2 = high
+  /* ── vezérlők & állapot ── */
+  late final TextEditingController _titleC;
+  late final TextEditingController _contentC;
 
+  String? selectedFolder; // null → nincs mappa
+  bool pinned = false;
+  int _priority = 1; // 0 low | 1 normal | 2 high
+
+  /* ── segédek ── */
   String? _norm(dynamic id) {
-    if (id == null) return null;
-    final s = id.toString();
+    final s = id?.toString() ?? '';
     return s.isEmpty ? null : s;
   }
 
@@ -34,6 +42,7 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
     _priority = widget.note['priority'] ?? 1;
   }
 
+  /* ── REST ── */
   Future<void> _save() async {
     await http.put(
       Uri.parse(
@@ -48,7 +57,7 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
         'folderId': selectedFolder,
       }),
     );
-    if (context.mounted) Navigator.pop(context, true);
+    if (mounted) Navigator.pop(context, true);
   }
 
   Future<void> _delete() async {
@@ -57,60 +66,95 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
         'https://app-in-progress-457709.lm.r.appspot.com/notes/${widget.note['id']}',
       ),
     );
-    if (context.mounted) Navigator.pop(context, true);
+    if (mounted) Navigator.pop(context, true);
   }
 
+  /* ── festett pötty a prior-dropdownhoz ── */
+  Widget _prioDot(Color c) => Container(
+    width: 10,
+    height: 10,
+    margin: const EdgeInsets.only(right: 6),
+    decoration: BoxDecoration(color: c, shape: BoxShape.circle),
+  );
+
+  /* ─────────────────────────────── UI ── */
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppStyle.surface,
       appBar: AppBar(
-        title: const Text('Jegyzet részletei'),
+        backgroundColor: AppStyle.background,
+        title: Text(
+          'NOTE  //  DETAIL',
+          style: GoogleFonts.orbitron(
+            color: AppStyle.accentGreen,
+            letterSpacing: 1.4,
+          ),
+        ),
         actions: [
-          IconButton(icon: const Icon(Icons.delete), onPressed: _delete),
+          IconButton(
+            icon: const Icon(Icons.delete, color: AppStyle.accentRed),
+            tooltip: 'Delete',
+            onPressed: _delete,
+          ),
         ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
+            /* ---- cím ---- */
             TextField(
               controller: _titleC,
-              style: const TextStyle(color: AppStyle.textPrimary),
-              decoration: const InputDecoration(labelText: 'Cím'),
+              style: GoogleFonts.orbitron(color: AppStyle.textPrimary),
+              decoration: InputDecoration(
+                labelText: 'CÍM',
+                labelStyle: GoogleFonts.orbitron(color: AppStyle.textSecondary),
+              ),
             ),
+
             const SizedBox(height: 10),
+
+            /* ---- tartalom ---- */
             TextField(
               controller: _contentC,
               maxLines: 8,
-              style: const TextStyle(color: AppStyle.textPrimary),
-              decoration: const InputDecoration(labelText: 'Tartalom'),
+              style: GoogleFonts.orbitron(color: AppStyle.textPrimary),
+              decoration: InputDecoration(
+                labelText: 'TARTALOM',
+                labelStyle: GoogleFonts.orbitron(color: AppStyle.textSecondary),
+              ),
             ),
-            const SizedBox(height: 20),
+
+            const SizedBox(height: 24),
+
+            /* ---- PIN + MAPPA ---- */
             Row(
               children: [
-                const Text(
-                  'Kitűzve:',
-                  style: TextStyle(color: AppStyle.textPrimary),
+                Text(
+                  'PIN',
+                  style: GoogleFonts.orbitron(color: AppStyle.textPrimary),
                 ),
                 Switch(
                   value: pinned,
+                  activeColor: AppStyle.accentGreen,
+                  inactiveTrackColor: AppStyle.textSecondary,
                   onChanged: (v) => setState(() => pinned = v),
-                  activeColor: Colors.red,
                 ),
                 const Spacer(),
                 DropdownButton<String?>(
+                  dropdownColor: AppStyle.surface,
                   value:
                       widget.folders.any(
                             (f) => _norm(f['id']) == selectedFolder,
                           )
                           ? selectedFolder
                           : null,
-                  dropdownColor: AppStyle.surface,
-                  hint: const Text(
-                    'Mappa',
-                    style: TextStyle(color: AppStyle.textPrimary),
+                  hint: Text(
+                    'MAPPA',
+                    style: GoogleFonts.orbitron(color: AppStyle.textPrimary),
                   ),
+                  style: GoogleFonts.orbitron(color: AppStyle.textPrimary),
                   items: [
                     const DropdownMenuItem(
                       value: null,
@@ -127,29 +171,71 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
                 ),
               ],
             ),
+
             const SizedBox(height: 20),
+
+            /* ---- PRIORITY ---- */
             Row(
               children: [
-                const Text(
-                  'Fontosság:',
-                  style: TextStyle(color: AppStyle.textPrimary),
+                Text(
+                  'PRIORITY',
+                  style: GoogleFonts.orbitron(color: AppStyle.textPrimary),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 16),
                 DropdownButton<int>(
-                  value: _priority,
                   dropdownColor: AppStyle.surface,
-                  style: const TextStyle(color: AppStyle.textPrimary),
-                  items: const [
-                    DropdownMenuItem(value: 0, child: Text('Alacsony')),
-                    DropdownMenuItem(value: 1, child: Text('Normál')),
-                    DropdownMenuItem(value: 2, child: Text('Magas')),
+                  value: _priority,
+                  style: GoogleFonts.orbitron(color: AppStyle.textPrimary),
+                  underline: const SizedBox(),
+                  items: [
+                    DropdownMenuItem(
+                      value: 0,
+                      child: Row(
+                        children: [
+                          _prioDot(AppStyle.accentGreen),
+                          const Text('LOW'),
+                        ],
+                      ),
+                    ),
+                    DropdownMenuItem(
+                      value: 1,
+                      child: Row(
+                        children: [
+                          _prioDot(AppStyle.accentYellow),
+                          const Text('NORMAL'),
+                        ],
+                      ),
+                    ),
+                    DropdownMenuItem(
+                      value: 2,
+                      child: Row(
+                        children: [
+                          _prioDot(AppStyle.accentRed),
+                          const Text('HIGH'),
+                        ],
+                      ),
+                    ),
                   ],
                   onChanged: (v) => setState(() => _priority = v!),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(onPressed: _save, child: const Text('Mentés')),
+
+            const SizedBox(height: 30),
+
+            /* ---- SAVE ---- */
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _save,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppStyle.accentGreen,
+                  foregroundColor: AppStyle.background,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: Text('SAVE', style: GoogleFonts.orbitron()),
+              ),
+            ),
           ],
         ),
       ),

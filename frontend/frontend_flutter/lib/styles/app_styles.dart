@@ -2,6 +2,7 @@
    – CYBERPUNK // TERMINAL // RETROFUTURE
 */
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppStyle {
   /* ───────── COLOR DNA ───────── */
@@ -13,91 +14,87 @@ class AppStyle {
   static const textPrimary = Color(0xFFEBEFF2); // világos text
   static const textSecondary = Color(0xFF6C7380); // tompa szürke
 
-  /* ───────── TYPEFACES ───────── */
-  static const String fontMain = 'Orbitron'; // futurisztikus fő font
-  static const String fontMono = 'JetBrainsMono'; // kódhoz
+  /* ───────── STATUS COLOR MAPPER ───────── */
+  static Color importanceColor(String? imp) {
+    switch (imp) {
+      case 'high':
+        return accentRed;
+      case 'low':
+        return accentGreen;
+      default:
+        return accentYellow; // normal
+    }
+  }
 
   /* ───────── THEMATIC ENGINE ───────── */
   static final ThemeData darkTheme = ThemeData(
     brightness: Brightness.dark,
     scaffoldBackgroundColor: background,
     canvasColor: surface,
-    fontFamily: fontMain,
 
-    appBarTheme: const AppBarTheme(
+    /* ––––––––––––––––– APPBAR ––––––––––––––––– */
+    appBarTheme: AppBarTheme(
       backgroundColor: background,
       elevation: 0,
-      titleTextStyle: TextStyle(
-        fontFamily: fontMain,
+      iconTheme: const IconThemeData(color: accentGreen),
+      titleTextStyle: GoogleFonts.orbitron(
+        color: accentGreen,
         fontSize: 22,
         letterSpacing: 2.0,
-        color: accentGreen,
-      ),
-      iconTheme: IconThemeData(color: accentGreen),
-    ),
-
-    textTheme: const TextTheme(
-      titleLarge: TextStyle(
-        fontFamily: fontMain,
-        fontSize: 20,
-        color: accentGreen,
-      ),
-      bodyMedium: TextStyle(
-        fontFamily: fontMono,
-        fontSize: 14,
-        color: textPrimary,
-      ),
-      labelSmall: TextStyle(
-        fontFamily: fontMono,
-        fontSize: 12,
-        color: textSecondary,
       ),
     ),
 
+    /* ––––––––––––––––– TEXT THEME ––––––––––––––––– */
+    textTheme: TextTheme(
+      titleLarge: GoogleFonts.orbitron(color: accentGreen, fontSize: 20),
+      bodyMedium: GoogleFonts.jetBrainsMono(color: textPrimary, fontSize: 14),
+      labelSmall: GoogleFonts.jetBrainsMono(color: textSecondary, fontSize: 12),
+    ),
+
+    /* ––––––––––––––––– CARDS ––––––––––––––––– */
     cardColor: surface,
     cardTheme: CardTheme(
       color: surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       elevation: 4,
       shadowColor: accentGreen.withOpacity(0.3),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
     ),
 
+    /* ––––––––––––––––– INPUT ––––––––––––––––– */
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: surface,
       labelStyle: const TextStyle(color: accentYellow),
       border: OutlineInputBorder(
-        borderSide: const BorderSide(color: accentGreen, width: 1),
         borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: accentGreen, width: 1),
       ),
       focusedBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: accentRed, width: 1.5),
         borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: accentRed, width: 1.5),
       ),
     ),
 
+    /* ––––––––––––––––– BUTTONS ––––––––––––––––– */
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: accentGreen,
         foregroundColor: background,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        textStyle: const TextStyle(
-          fontFamily: fontMono,
-          fontWeight: FontWeight.bold,
-        ),
+        textStyle: GoogleFonts.jetBrainsMono(fontWeight: FontWeight.bold),
       ),
     ),
-
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
       backgroundColor: accentRed,
       foregroundColor: textPrimary,
       shape: CircleBorder(),
     ),
 
+    /* ––––––––––––––––– DROPDOWNS ––––––––––––––––– */
     dropdownMenuTheme: DropdownMenuThemeData(
       menuStyle: MenuStyle(
-        backgroundColor: MaterialStateProperty.all(surface),
-        elevation: MaterialStateProperty.all(4),
+        backgroundColor: MaterialStatePropertyAll(surface),
+        elevation: MaterialStatePropertyAll(4),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -106,22 +103,11 @@ class AppStyle {
       ),
     ),
 
-    snackBarTheme: const SnackBarThemeData(
+    /* ––––––––––––––––– SNACK BARS ––––––––––––––––– */
+    snackBarTheme: SnackBarThemeData(
       backgroundColor: surface,
-      contentTextStyle: TextStyle(color: accentYellow, fontFamily: fontMono),
+      contentTextStyle: GoogleFonts.jetBrainsMono(color: accentYellow),
       actionTextColor: accentRed,
     ),
   );
-
-  /* ───────── STATUS COLOR MAPPER ───────── */
-  static Color importanceColor(String? imp) {
-    switch (imp) {
-      case 'high':
-        return accentYellow;
-      case 'low':
-        return accentGreen;
-      default:
-        return accentRed; // normal
-    }
-  }
 }

@@ -1,7 +1,8 @@
-/* lib/screens/notes_home.dart */
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:google_fonts/google_fonts.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import '../styles/app_styles.dart';
 import 'add_note.dart';
@@ -16,127 +17,153 @@ class NotesHome extends StatefulWidget {
 }
 
 class _NotesHomeState extends State<NotesHome> {
-  String priorityToLabel(int priority) {
-    switch (priority) {
-      case 2:
-        return 'high';
-      case 1:
-        return 'normal';
-      case 0:
-      default:
-        return 'low';
-    }
-  }
+  /* ── csak törlés SFX ── */
+  final AudioPlayer _deleteSfx = AudioPlayer();
 
+  /* ── állapot ── */
   List notes = [];
   List folders = [];
-
-  String? selectedFolderId; // null = "Összes"
+  String? selectedFolderId; // null → összes
   String searchQuery = '';
   String importanceFilter = 'all'; // all | high | normal | low
 
-  String? _normalize(dynamic id) {
-    if (id == null) return null;
-    final s = id.toString();
+  /* ── segédek ── */
+  String? _norm(dynamic id) {
+    final s = id?.toString() ?? '';
     return s.isEmpty ? null : s;
   }
 
-  String _fid(dynamic f) => _normalize(f['id']) ?? '';
+  String _fid(dynamic f) => _norm(f['id']) ?? '';
 
-  Future<void> fetchNotes() async {
+  String _prioLabel(int p) => switch (p) {
+    2 => 'high',
+    1 => 'normal',
+    _ => 'low',
+  };
+
+  /* ── REST ── */
+  Future<void> _fetchNotes() async {
     final r = await http.get(
       Uri.parse('https://app-in-progress-457709.lm.r.appspot.com/notes'),
     );
     if (r.statusCode == 200) setState(() => notes = jsonDecode(r.body));
   }
 
-  Future<void> fetchFolders() async {
+  Future<void> _fetchFolders() async {
     final r = await http.get(
       Uri.parse('https://app-in-progress-457709.lm.r.appspot.com/folders'),
     );
     if (r.statusCode == 200) setState(() => folders = jsonDecode(r.body));
   }
 
-  Future<void> assignNote(String id, String? folderId) async {
-    final n = notes.firstWhere((e) => e['id'] == id);
+  Future<void> _updateNote(Map n) async {
     await http.put(
-      Uri.parse('https://app-in-progress-457709.lm.r.appspot.com/notes/$id'),
+      Uri.parse(
+        'https://app-in-progress-457709.lm.r.appspot.com/notes/${n['id']}',
+      ),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'title': n['title'],
-        'content': n['content'],
-        'pinned': n['pinned'],
-        'priority': n['priority'],
-        'folderId': folderId,
-      }),
+      body: jsonEncode(n),
     );
-    fetchNotes();
+    _fetchNotes();
+  }
+
+  Future<void> _deleteNote(String id) async {
+    await _deleteSfx.play(AssetSource('sfx/delete.mp3'));
+    await http.delete(
+      Uri.parse('https://app-in-progress-457709.lm.r.appspot.com/notes/$id'),
+    );
+    _fetchNotes();
   }
 
   @override
   void initState() {
     super.initState();
-    fetchNotes();
-    fetchFolders();
+    _fetchNotes();
+    _fetchFolders();
   }
 
+  /* ──────────────────────────────────────── UI ── */
   @override
   Widget build(BuildContext context) {
-    // apply filters: folder, search, importance
-    List filtered =
+    /* ---- szűrés ---- */
+    final filtered =
         notes.where((n) {
           final byFolder =
               selectedFolderId == null ||
-              _normalize(n['folderId']) == selectedFolderId;
-          final q = searchQuery.toLowerCase();
-          final bySearch =
-              q.isEmpty ||
-              (n['title'] ?? '').toString().toLowerCase().contains(q) ||
-              (n['content'] ?? '').toString().toLowerCase().contains(q);
-          final imp = priorityToLabel(n['priority'] ?? 1);
-          final byImportance =
-              importanceFilter == 'all' || imp == importanceFilter;
-          return byFolder && bySearch && byImportance;
+              _norm(n['folderId']) == selectedFolderId;
+          final byText =
+              searchQuery.isEmpty ||
+              (n['title'] ?? '').toString().toLowerCase().contains(
+                searchQuery.toLowerCase(),
+              ) ||
+              (n['content'] ?? '').toString().toLowerCase().contains(
+                searchQuery.toLowerCase(),
+              );
+          final byPrio =
+              importanceFilter == 'all' ||
+              _prioLabel(n['priority'] ?? 1) == importanceFilter;
+          return byFolder && byText && byPrio;
         }).toList();
 
-    // pinned first
     final pinned = filtered.where((n) => n['pinned'] == true).toList();
     final others = filtered.where((n) => n['pinned'] != true).toList();
 
     return Scaffold(
       backgroundColor: AppStyle.background,
       appBar: AppBar(
-        title: const Text('NOTES', style: TextStyle(letterSpacing: 2)),
         backgroundColor: AppStyle.background,
+        title: Text(
+          'NOTES',
+          style: GoogleFonts.orbitron(
+            color: AppStyle.accentGreen,
+            fontSize: 22,
+            letterSpacing: 2,
+          ),
+        ),
         actions: [
           PopupMenuButton<String>(
-            icon: const Icon(Icons.sort),
+            icon: const Icon(Icons.sort, color: AppStyle.accentGreen),
             onSelected: (v) => setState(() => importanceFilter = v),
             itemBuilder:
-                (_) => const [
-                  PopupMenuItem(value: 'all', child: Text('Minden')),
-                  PopupMenuItem(value: 'high', child: Text('High priority')),
-                  PopupMenuItem(
-                    value: 'normal',
-                    child: Text('Normal priority'),
+                (_) => [
+                  _prioMenuItem(
+                    value: 'all',
+                    label: 'Minden',
+                    color: Colors.grey.shade600,
                   ),
-                  PopupMenuItem(value: 'low', child: Text('Low priority')),
+                  _prioMenuItem(
+                    value: 'low',
+                    label: 'Low priority',
+                    color: AppStyle.accentGreen,
+                  ),
+                  _prioMenuItem(
+                    value: 'normal',
+                    label: 'Normal priority',
+                    color: AppStyle.accentYellow,
+                  ),
+                  _prioMenuItem(
+                    value: 'high',
+                    label: 'High priority',
+                    color: AppStyle.accentRed,
+                  ),
                 ],
           ),
         ],
       ),
+
       body: Column(
         children: [
-          // folder filter dropdown
+          /* ---- mappa dropdown ---- */
           Padding(
             padding: const EdgeInsets.all(8),
             child: DropdownButton<String?>(
               isExpanded: true,
+              dropdownColor: AppStyle.surface,
+              style: GoogleFonts.orbitron(color: AppStyle.textPrimary),
               value:
                   folders.any((f) => _fid(f) == selectedFolderId)
                       ? selectedFolderId
                       : null,
-              dropdownColor: AppStyle.surface,
               items: [
                 const DropdownMenuItem(
                   value: null,
@@ -150,45 +177,41 @@ class _NotesHomeState extends State<NotesHome> {
               onChanged: (v) => setState(() => selectedFolderId = v),
             ),
           ),
-          // on-screen search field
+
+          /* ---- keresőmező ---- */
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             child: TextField(
-              decoration: const InputDecoration(
+              style: GoogleFonts.orbitron(color: AppStyle.textPrimary),
+              decoration: InputDecoration(
                 hintText: 'Keresés...',
-                prefixIcon: Icon(Icons.search),
+                hintStyle: GoogleFonts.orbitron(color: AppStyle.textSecondary),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: AppStyle.accentGreen,
+                ),
                 filled: true,
-                fillColor: Colors.white12,
+                fillColor: AppStyle.surface,
                 border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide.none,
-                  borderRadius: BorderRadius.all(Radius.circular(8)),
                 ),
               ),
               onChanged: (v) => setState(() => searchQuery = v),
             ),
           ),
+
+          /* ---- lista ---- */
           Expanded(
             child: ListView(
               padding: const EdgeInsets.only(bottom: 80),
               children: [
                 if (pinned.isNotEmpty) ...[
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Text(
-                      'PINNED',
-                      style: TextStyle(fontFamily: 'DotMatrix'),
-                    ),
-                  ),
+                  _sectionHeader('PINNED'),
                   _noteGrid(pinned),
                 ],
                 if (others.isNotEmpty) ...[
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Text(
-                      'ALL NOTES',
-                      style: TextStyle(fontFamily: 'DotMatrix'),
-                    ),
-                  ),
+                  _sectionHeader('ALL NOTES'),
                   _noteGrid(others),
                 ],
               ],
@@ -196,8 +219,10 @@ class _NotesHomeState extends State<NotesHome> {
           ),
         ],
       ),
+
+      /* ---- FAB ---- */
       floatingActionButton: FloatingActionButton(
-        backgroundColor: AppStyle.accentRed,
+        backgroundColor: AppStyle.accentGreen,
         child: const Icon(Icons.add, color: Colors.white),
         onPressed: () async {
           final choice = await showModalBottomSheet<String>(
@@ -213,65 +238,78 @@ class _NotesHomeState extends State<NotesHome> {
                   ],
                 ),
           );
+
           if (choice == 'note') {
-            final ok = await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const AddNotePage()),
-            );
-            if (ok == true) fetchNotes();
+            if (await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AddNotePage()),
+                ) ==
+                true)
+              _fetchNotes();
           } else if (choice == 'folder') {
-            final ok = await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const AddFolderPage()),
-            );
-            if (ok == true) fetchFolders();
+            if (await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AddFolderPage()),
+                ) ==
+                true)
+              _fetchFolders();
           } else if (choice == 'manage') {
             await Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const ManageFoldersPage()),
             );
-            fetchFolders();
-            fetchNotes();
+            _fetchFolders();
+            _fetchNotes();
           }
         },
       ),
     );
   }
 
-  Widget _noteGrid(List list) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: list.length,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisSpacing: 8,
-          crossAxisSpacing: 8,
-          childAspectRatio: 3 / 4,
-        ),
-        itemBuilder: (_, i) => _noteCard(list[i]),
+  /* ── helper widgetek ── */
+  Widget _sectionHeader(String t) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    child: Text(
+      t,
+      style: GoogleFonts.orbitron(color: AppStyle.accentGreen, fontSize: 18),
+    ),
+  );
+
+  Widget _noteGrid(List list) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 8),
+    child: GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: list.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        childAspectRatio: 3 / 4,
       ),
-    );
-  }
+      itemBuilder: (_, i) => _noteCard(list[i]),
+    ),
+  );
 
   Widget _noteCard(Map n) {
-    final first = (n['content'] ?? '').split('\n').first;
-    final imp = priorityToLabel(n['priority'] ?? 1);
-    final col = AppStyle.importanceColor(imp);
-    return InkWell(
-      onTap: () async {
-        final ch = await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => NoteDetailPage(note: n, folders: folders),
-          ),
-        );
-        if (ch == true) fetchNotes();
-      },
-      child: Card(
-        color: n['pinned'] == true ? AppStyle.accentRed : AppStyle.surface,
+    final firstLine = (n['content'] ?? '').split('\n').first;
+    final prioLabel = _prioLabel(n['priority'] ?? 1);
+    final prioColour = AppStyle.importanceColor(prioLabel);
+
+    return Card(
+      color: n['pinned'] == true ? AppStyle.accentYellow : AppStyle.surface,
+      child: InkWell(
+        /* ---- kopp → részletes szerkesztő ---- */
+        onTap: () async {
+          if (await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => NoteDetailPage(note: n, folders: folders),
+                ),
+              ) ==
+              true)
+            _fetchNotes();
+        },
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Column(
@@ -279,14 +317,21 @@ class _NotesHomeState extends State<NotesHome> {
             children: [
               Text(
                 n['title'] ?? '',
-                style: Theme.of(context).textTheme.titleLarge,
+                style: GoogleFonts.orbitron(
+                  color: AppStyle.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 6),
               Text(
-                first,
-                style: Theme.of(context).textTheme.labelSmall,
+                firstLine,
+                style: GoogleFonts.orbitron(
+                  color: AppStyle.textSecondary,
+                  fontSize: 12,
+                ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -299,120 +344,26 @@ class _NotesHomeState extends State<NotesHome> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: col,
+                      color: prioColour,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      imp,
-                      style: const TextStyle(
+                      prioLabel,
+                      style: GoogleFonts.orbitron(
+                        color: AppStyle.textPrimary,
                         fontSize: 10,
-                        fontFamily: AppStyle.fontMono,
                       ),
                     ),
                   ),
                   const Spacer(),
-                  PopupMenuButton<String>(
+                  IconButton(
                     icon: const Icon(
                       Icons.more_vert,
                       color: AppStyle.textPrimary,
+                      size: 20,
                     ),
-                    onSelected: (value) async {
-                      if (value == 'toggle_pin') {
-                        final updated = Map<String, dynamic>.from(n);
-                        updated['pinned'] = !(n['pinned'] == true);
-                        await http.put(
-                          Uri.parse(
-                            'https://app-in-progress-457709.lm.r.appspot.com/notes/${n['id']}',
-                          ),
-                          headers: {'Content-Type': 'application/json'},
-                          body: jsonEncode(updated),
-                        );
-                        fetchNotes();
-                      } else if (value == 'delete') {
-                        await http.delete(
-                          Uri.parse(
-                            'https://app-in-progress-457709.lm.r.appspot.com/notes/${n['id']}',
-                          ),
-                        );
-                        fetchNotes();
-                      } else if (value == 'set_low' ||
-                          value == 'set_normal' ||
-                          value == 'set_high') {
-                        final updated = Map<String, dynamic>.from(n);
-                        updated['priority'] =
-                            value == 'set_low'
-                                ? 0
-                                : value == 'set_normal'
-                                ? 1
-                                : 2;
-                        await http.put(
-                          Uri.parse(
-                            'https://app-in-progress-457709.lm.r.appspot.com/notes/${n['id']}',
-                          ),
-                          headers: {'Content-Type': 'application/json'},
-                          body: jsonEncode(updated),
-                        );
-                        fetchNotes();
-                      } else {
-                        assignNote(n['id'], _normalize(value));
-                      }
-                    },
-                    itemBuilder:
-                        (_) => [
-                          const PopupMenuItem<String>(
-                            value: 'info',
-                            enabled: false,
-                            child: Text('Melyik mappába szeretnéd?'),
-                          ),
-                          const PopupMenuItem<String>(
-                            value: null,
-                            child: Text('Nincs mappa'),
-                          ),
-                          ...folders.map(
-                            (f) => PopupMenuItem<String>(
-                              value: _fid(f),
-                              child: Text(f['name']),
-                            ),
-                          ),
-                          const PopupMenuDivider(),
-
-                          // Prioritás beállítás
-                          const PopupMenuItem<String>(
-                            value: 'info2',
-                            enabled: false,
-                            child: Text('Prioritás módosítása:'),
-                          ),
-                          const PopupMenuItem<String>(
-                            value: 'set_low',
-                            child: Text('Alacsony (low)'),
-                          ),
-                          const PopupMenuItem<String>(
-                            value: 'set_normal',
-                            child: Text('Normál (normal)'),
-                          ),
-                          const PopupMenuItem<String>(
-                            value: 'set_high',
-                            child: Text('Magas (high)'),
-                          ),
-
-                          const PopupMenuDivider(),
-
-                          PopupMenuItem<String>(
-                            value: 'toggle_pin',
-                            child: Text(
-                              n['pinned'] == true
-                                  ? 'Levétel a főoldalról'
-                                  : 'Kitűzés',
-                            ),
-                          ),
-                          const PopupMenuItem<String>(
-                            value: 'delete',
-                            child: Text(
-                              'Törlés',
-                              style: TextStyle(color: Colors.redAccent),
-                            ),
-                          ),
-                        ],
+                    onPressed: () => _showOptions(n),
+                    tooltip: 'Műveletek',
                   ),
                 ],
               ),
@@ -423,32 +374,150 @@ class _NotesHomeState extends State<NotesHome> {
     );
   }
 
+  /* ---- alsó-sheet (mappa / pin / prio / törlés) ---- */
+  Future<void> _showOptions(Map note) async {
+    final currentPrio = note['priority'] ?? 1;
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: AppStyle.surface,
+      // ← ❶ engedd teljes képernyőn nyúlni
+      isScrollControlled: true,
+      builder:
+          (_) => DraggableScrollableSheet(
+            // - a “fül” nélkül teljes magasságot is elfoglalhat
+            expand: false, // felhúzható, de nem kötelező teljesen
+            initialChildSize: 0.65, // induljon ~65 %-on (ízlés szerint)
+            minChildSize: 0.4,
+            maxChildSize: 0.95,
+            builder:
+                (_, controller) => ListView(
+                  controller: controller, // ❷ scroll-kontroller
+                  children: [
+                    ListTile(
+                      title: Text(
+                        'Melyik mappába szeretnéd?',
+                        style: GoogleFonts.orbitron(),
+                      ),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.inbox),
+                      title: Text('Nincs mappa', style: GoogleFonts.orbitron()),
+                      onTap: () {
+                        _updateNote({...note, 'folderId': null});
+                        Navigator.pop(context);
+                      },
+                    ),
+                    ...folders.map(
+                      (f) => ListTile(
+                        leading: const Icon(Icons.folder),
+                        title: Text(f['name'], style: GoogleFonts.orbitron()),
+                        onTap: () {
+                          _updateNote({...note, 'folderId': _fid(f)});
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ),
+
+                    const Divider(),
+
+                    ListTile(
+                      leading: Icon(
+                        note['pinned'] == true
+                            ? Icons.push_pin
+                            : Icons.push_pin_outlined,
+                      ),
+                      title: Text(
+                        note['pinned'] == true
+                            ? 'Levétel a főoldalról'
+                            : 'Kitűzés',
+                        style: GoogleFonts.orbitron(),
+                      ),
+                      onTap: () {
+                        _updateNote({
+                          ...note,
+                          'pinned': !(note['pinned'] == true),
+                        });
+                        Navigator.pop(context);
+                      },
+                    ),
+
+                    const Divider(),
+
+                    ListTile(
+                      title: Text(
+                        'Prioritás',
+                        style: GoogleFonts.orbitron(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    for (final p in [
+                      {'v': 0, 'l': 'low'},
+                      {'v': 1, 'l': 'normal'},
+                      {'v': 2, 'l': 'high'},
+                    ])
+                      RadioListTile(
+                        value: p['v'],
+                        groupValue: currentPrio,
+                        title: Text(
+                          p['l'] as String,
+                          style: GoogleFonts.orbitron(),
+                        ),
+                        onChanged: (_) {
+                          _updateNote({...note, 'priority': p['v']});
+                          Navigator.pop(context);
+                        },
+                      ),
+
+                    const Divider(),
+
+                    ListTile(
+                      leading: const Icon(
+                        Icons.delete,
+                        color: Colors.redAccent,
+                      ),
+                      title: Text(
+                        'Törlés',
+                        style: GoogleFonts.orbitron(color: Colors.redAccent),
+                      ),
+                      onTap: () {
+                        _deleteNote(note['id']);
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
+                ),
+          ),
+    );
+  }
+
+  /* ---- alsó-sheet választó elem ---- */
   ListTile _sheetItem(String t, IconData i, String v) => ListTile(
     leading: Icon(i, color: AppStyle.textPrimary),
-    title: Text(t, style: const TextStyle(color: AppStyle.textPrimary)),
+    title: Text(t, style: GoogleFonts.orbitron(color: AppStyle.textPrimary)),
     onTap: () => Navigator.pop(context, v),
   );
-}
 
-class _NoteSearchDelegate extends SearchDelegate<String> {
-  @override
-  ThemeData appBarTheme(BuildContext context) => Theme.of(context).copyWith(
-    inputDecorationTheme: const InputDecorationTheme(border: InputBorder.none),
-  );
-  @override
-  List<Widget> buildActions(BuildContext context) => [
-    IconButton(icon: const Icon(Icons.clear), onPressed: () => query = ''),
-  ];
-  @override
-  Widget buildLeading(BuildContext context) => IconButton(
-    icon: const Icon(Icons.arrow_back),
-    onPressed: () => close(context, ''),
-  );
-  @override
-  Widget buildResults(BuildContext context) => const SizedBox();
-  @override
-  Widget buildSuggestions(BuildContext context) => const SizedBox();
-  @override
-  void close(BuildContext context, String result) =>
-      super.close(context, query);
+  /* ---- színes pötty  PopupMenu-hez ---- */
+  PopupMenuItem<String> _prioMenuItem({
+    required String value,
+    required String label,
+    required Color color,
+  }) {
+    return PopupMenuItem<String>(
+      value: value,
+      child: Row(
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          Text(label, style: GoogleFonts.orbitron()),
+        ],
+      ),
+    );
+  }
 }

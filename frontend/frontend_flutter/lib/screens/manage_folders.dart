@@ -1,6 +1,11 @@
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+/*  lib/screens/manage_folders.dart
+    – CYBER-geek folder manager (Orbitron everywhere)  */
+
 import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
+
 import '../styles/app_styles.dart';
 
 class ManageFoldersPage extends StatefulWidget {
@@ -13,20 +18,19 @@ class ManageFoldersPage extends StatefulWidget {
 class _ManageFoldersPageState extends State<ManageFoldersPage> {
   List folders = [];
 
-  /* --------- lekérés --------- */
+  /* ── REST ── */
   Future<void> _fetch() async {
-    final res = await http.get(
+    final r = await http.get(
       Uri.parse('https://app-in-progress-457709.lm.r.appspot.com/folders'),
     );
-    if (res.statusCode == 200) setState(() => folders = jsonDecode(res.body));
+    if (r.statusCode == 200) setState(() => folders = jsonDecode(r.body));
   }
 
-  /* --------- törlés --------- */
   Future<void> _delete(String id) async {
-    final ok = await http.delete(
+    final r = await http.delete(
       Uri.parse('https://app-in-progress-457709.lm.r.appspot.com/folders/$id'),
     );
-    if (ok.statusCode == 200) _fetch();
+    if (r.statusCode == 200) _fetch();
   }
 
   @override
@@ -35,44 +39,79 @@ class _ManageFoldersPageState extends State<ManageFoldersPage> {
     _fetch();
   }
 
+  /* ───────────────────────── UI ── */
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppStyle.background,
-      appBar: AppBar(title: const Text('Mappák kezelése')),
+      appBar: AppBar(
+        backgroundColor: AppStyle.background,
+        title: Text(
+          'FOLDER // MANAGER',
+          style: GoogleFonts.orbitron(
+            color: AppStyle.accentGreen,
+            letterSpacing: 1.4,
+          ),
+        ),
+      ),
+
       body:
           folders.isEmpty
               ? const Center(child: CircularProgressIndicator())
-              : ListView.builder(
+              : ListView.separated(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                separatorBuilder: (_, __) => const Divider(height: 0),
                 itemCount: folders.length,
                 itemBuilder: (_, i) {
                   final f = folders[i];
                   return ListTile(
+                    leading: const Icon(
+                      Icons.folder,
+                      color: AppStyle.accentYellow,
+                    ),
                     title: Text(
                       f['name'],
-                      style: const TextStyle(color: AppStyle.textPrimary),
+                      style: GoogleFonts.orbitron(color: AppStyle.textPrimary),
                     ),
                     trailing: IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.redAccent),
+                      icon: const Icon(Icons.delete, color: AppStyle.accentRed),
+                      tooltip: 'Delete folder',
                       onPressed: () async {
                         final yes = await showDialog<bool>(
                           context: context,
                           builder:
                               (_) => AlertDialog(
-                                title: const Text('Biztos törlöd?'),
-                                content: const Text(
-                                  'A mappa jegyzetei is törlődni fognak!',
+                                backgroundColor: AppStyle.surface,
+                                title: Text(
+                                  'CONFIRM DELETE?',
+                                  style: GoogleFonts.orbitron(
+                                    color: AppStyle.accentRed,
+                                  ),
+                                ),
+                                content: Text(
+                                  'A mappa összes jegyzete is elvész!',
+                                  style: GoogleFonts.orbitron(
+                                    color: AppStyle.textSecondary,
+                                  ),
                                 ),
                                 actions: [
                                   TextButton(
                                     onPressed:
                                         () => Navigator.pop(context, false),
-                                    child: const Text('Mégse'),
+                                    child: Text(
+                                      'CANCEL',
+                                      style: GoogleFonts.orbitron(),
+                                    ),
                                   ),
                                   TextButton(
                                     onPressed:
                                         () => Navigator.pop(context, true),
-                                    child: const Text('Törlés'),
+                                    child: Text(
+                                      'DELETE',
+                                      style: GoogleFonts.orbitron(
+                                        color: AppStyle.accentRed,
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),

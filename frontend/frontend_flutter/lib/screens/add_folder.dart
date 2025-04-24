@@ -1,6 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+/*  lib/screens/add_folder.dart
+    – create new FOLDER in neon-retro style  */
+
 import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 
 import '../styles/app_styles.dart';
 
@@ -12,61 +16,77 @@ class AddFolderPage extends StatefulWidget {
 }
 
 class _AddFolderPageState extends State<AddFolderPage> {
-  final TextEditingController _nameController = TextEditingController();
-  String message = '';
+  final _nameC = TextEditingController();
+  String _msg = '';
 
+  /* ───────────────── SEND ── */
   Future<void> _submitFolder() async {
-    final name = _nameController.text.trim();
+    final name = _nameC.text.trim();
 
     if (name.isEmpty) {
-      setState(() => message = 'Adj meg mappanevet!');
+      setState(() => _msg = 'Adj meg mappanevet!');
       return;
     }
 
-    final url = Uri.parse(
-      'https://app-in-progress-457709.lm.r.appspot.com/folders',
-    );
-    final response = await http.post(
-      url,
+    final r = await http.post(
+      Uri.parse('https://app-in-progress-457709.lm.r.appspot.com/folders'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'name': name}),
     );
 
-    if (response.statusCode == 200) {
-      Navigator.pop(context, true); // jelzi, hogy sikerült
+    if (r.statusCode == 200) {
+      if (context.mounted) Navigator.pop(context, true);
     } else {
-      setState(() => message = 'Hiba történt (${response.statusCode})');
+      setState(() => _msg = 'Hiba (${r.statusCode})');
     }
   }
 
+  /* ───────────────── UI ── */
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppStyle.background,
       appBar: AppBar(
-        title: const Text('Új mappa'),
         backgroundColor: AppStyle.background,
+        title: Text(
+          'NEW // FOLDER',
+          style: GoogleFonts.orbitron(
+            color: AppStyle.accentGreen,
+            letterSpacing: 1.4,
+          ),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
+            /* ---- NAME ---- */
             TextField(
-              controller: _nameController,
-              style: const TextStyle(color: AppStyle.textPrimary),
-              decoration: const InputDecoration(
+              controller: _nameC,
+              style: GoogleFonts.orbitron(color: AppStyle.textPrimary),
+              decoration: InputDecoration(
                 labelText: 'Mappa neve',
-                labelStyle: TextStyle(color: AppStyle.textSecondary),
+                labelStyle: GoogleFonts.orbitron(color: AppStyle.textSecondary),
+                filled: true,
+                fillColor: AppStyle.surface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
-            const SizedBox(height: 20),
+
+            const SizedBox(height: 24),
+
+            /* ---- SAVE ---- */
             ElevatedButton(
               onPressed: _submitFolder,
-              child: const Text('Mentés'),
+              child: Text('MENTÉS', style: GoogleFonts.orbitron()),
             ),
-            const SizedBox(height: 10),
-            if (message.isNotEmpty)
-              Text(message, style: const TextStyle(color: Colors.redAccent)),
+
+            if (_msg.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(_msg, style: GoogleFonts.orbitron(color: Colors.redAccent)),
+            ],
           ],
         ),
       ),
