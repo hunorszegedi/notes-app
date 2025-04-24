@@ -43,7 +43,7 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
         'title': _titleC.text,
         'content': _contentC.text,
         'pinned': pinned,
-        'importance': widget.note['importance'],
+        'priority': widget.note['importance'],
         'folderId': selectedFolder, // lehet null
       }),
     );
@@ -62,7 +62,7 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppStyle.backgroundColor,
+      backgroundColor: AppStyle.surface,
       appBar: AppBar(
         title: const Text('Jegyzet részletei'),
         actions: [
@@ -75,14 +75,14 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
           children: [
             TextField(
               controller: _titleC,
-              style: const TextStyle(color: AppStyle.accentWhite),
+              style: const TextStyle(color: AppStyle.textPrimary),
               decoration: const InputDecoration(labelText: 'Cím'),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: _contentC,
               maxLines: 8,
-              style: const TextStyle(color: AppStyle.accentWhite),
+              style: const TextStyle(color: AppStyle.textPrimary),
               decoration: const InputDecoration(labelText: 'Tartalom'),
             ),
             const SizedBox(height: 20),
@@ -90,7 +90,7 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
               children: [
                 const Text(
                   'Kitűzve:',
-                  style: TextStyle(color: AppStyle.accentWhite),
+                  style: TextStyle(color: AppStyle.textPrimary),
                 ),
                 Switch(
                   value: pinned,
@@ -105,10 +105,10 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
                           )
                           ? selectedFolder
                           : null,
-                  dropdownColor: AppStyle.cardColor,
+                  dropdownColor: AppStyle.surface,
                   hint: const Text(
                     'Mappa',
-                    style: TextStyle(color: AppStyle.accentWhite),
+                    style: TextStyle(color: AppStyle.textPrimary),
                   ),
                   items: [
                     const DropdownMenuItem(

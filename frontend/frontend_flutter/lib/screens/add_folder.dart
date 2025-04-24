@@ -42,10 +42,10 @@ class _AddFolderPageState extends State<AddFolderPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppStyle.backgroundColor,
+      backgroundColor: AppStyle.background,
       appBar: AppBar(
         title: const Text('Új mappa'),
-        backgroundColor: AppStyle.backgroundColor,
+        backgroundColor: AppStyle.background,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -53,10 +53,10 @@ class _AddFolderPageState extends State<AddFolderPage> {
           children: [
             TextField(
               controller: _nameController,
-              style: const TextStyle(color: AppStyle.accentWhite),
+              style: const TextStyle(color: AppStyle.textPrimary),
               decoration: const InputDecoration(
                 labelText: 'Mappa neve',
-                labelStyle: TextStyle(color: AppStyle.greyText),
+                labelStyle: TextStyle(color: AppStyle.textSecondary),
               ),
             ),
             const SizedBox(height: 20),

@@ -52,7 +52,7 @@ class _AddNotePageState extends State<AddNotePage> {
         'title': title,
         'content': content,
         'pinned': isPinned,
-        'importance': importance,
+        'priority': importance,
         'folderId': selectedFolder, // lehet null
       }),
     );
@@ -68,10 +68,10 @@ class _AddNotePageState extends State<AddNotePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppStyle.backgroundColor,
+      backgroundColor: AppStyle.background,
       appBar: AppBar(
         title: const Text('Új jegyzet'),
-        backgroundColor: AppStyle.backgroundColor,
+        backgroundColor: AppStyle.background,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -93,7 +93,7 @@ class _AddNotePageState extends State<AddNotePage> {
             DropdownButtonFormField<String>(
               value: selectedFolder,
               hint: const Text('Mappa (opcionális)'),
-              dropdownColor: AppStyle.cardColor,
+              dropdownColor: AppStyle.surface,
               decoration: const InputDecoration(labelText: 'Mappa'),
               items: [
                 const DropdownMenuItem<String>(
@@ -123,7 +123,7 @@ class _AddNotePageState extends State<AddNotePage> {
                 const Text('Fontosság:'),
                 DropdownButton(
                   value: importance,
-                  dropdownColor: AppStyle.cardColor,
+                  dropdownColor: AppStyle.surface,
                   items:
                       ['low', 'normal', 'high']
                           .map(

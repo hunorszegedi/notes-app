@@ -38,7 +38,7 @@ class _ManageFoldersPageState extends State<ManageFoldersPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppStyle.backgroundColor,
+      backgroundColor: AppStyle.background,
       appBar: AppBar(title: const Text('Mappák kezelése')),
       body:
           folders.isEmpty
@@ -50,7 +50,7 @@ class _ManageFoldersPageState extends State<ManageFoldersPage> {
                   return ListTile(
                     title: Text(
                       f['name'],
-                      style: const TextStyle(color: AppStyle.accentWhite),
+                      style: const TextStyle(color: AppStyle.textPrimary),
                     ),
                     trailing: IconButton(
                       icon: const Icon(Icons.delete, color: Colors.redAccent),

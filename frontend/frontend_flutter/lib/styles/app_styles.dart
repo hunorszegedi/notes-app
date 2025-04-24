@@ -1,66 +1,127 @@
+/* lib/styles/app_styles.dart
+   – minimal-cyber / retro-terminal dizájn
+*/
 import 'package:flutter/material.dart';
 
 class AppStyle {
-  // 🎨 Színek
-  static const Color backgroundColor = Color(0xFF0D0D0D);
-  static const Color cardColor = Color(0xFF1E1E1E);
-  static const Color accentRed = Color(0xFFD32F2F);
-  static const Color accentWhite = Color(0xFFF5F5F5);
-  static const Color greyText = Color(0xFFB0BEC5);
+  /* ───────── PALETTA ───────── */
+  static const background = Color(0xFF0A0A0C);
+  static const surface = Color(0xFF18181B);
+  static const accentRed = Color(0xFFE53935);
+  static const accentYellow = Color(0xFFFFC400);
+  static const accentGreen = Color(0xFF00C853);
+  static const textPrimary = Color(0xFFEFEFEF);
+  static const textSecondary = Color(0xFF8A8A8E);
 
-  // 🔠 Betűtípus
-  static const String fontFamily = 'DotMatrix';
+  /* ───────── TYPO ───────── */
+  static const String fontMain = 'DotMatrix';
+  static const String fontMono = 'JetBrainsMono';
 
-  // 📱 Téma
-  static ThemeData darkTheme = ThemeData(
+  /* ───────── TÉMA ───────── */
+  static final ThemeData darkTheme = ThemeData(
     brightness: Brightness.dark,
-    scaffoldBackgroundColor: backgroundColor,
-    fontFamily: fontFamily,
+    scaffoldBackgroundColor: background,
+    canvasColor: surface,
+    fontFamily: fontMain,
+
     appBarTheme: const AppBarTheme(
-      backgroundColor: backgroundColor,
+      backgroundColor: background,
       elevation: 0,
       titleTextStyle: TextStyle(
-        color: accentWhite,
-        fontSize: 22,
-        fontWeight: FontWeight.bold,
-        letterSpacing: 2,
-      ),
-      iconTheme: IconThemeData(color: accentWhite),
-    ),
-    textTheme: const TextTheme(
-      bodyMedium: TextStyle(color: accentWhite, fontSize: 16),
-      titleLarge: TextStyle(
-        color: accentWhite,
+        fontFamily: fontMain,
         fontSize: 24,
-        fontWeight: FontWeight.bold,
+        letterSpacing: 2,
+        color: textPrimary,
       ),
-      labelSmall: TextStyle(color: greyText, fontSize: 12),
+      iconTheme: IconThemeData(color: textPrimary),
     ),
-    floatingActionButtonTheme: const FloatingActionButtonThemeData(
-      backgroundColor: accentRed,
-      foregroundColor: accentWhite,
+
+    textTheme: const TextTheme(
+      titleLarge: TextStyle(
+        fontFamily: fontMain,
+        fontSize: 22,
+        color: textPrimary,
+      ),
+      bodyMedium: TextStyle(
+        fontFamily: fontMono,
+        fontSize: 14,
+        color: textPrimary,
+      ),
+      labelSmall: TextStyle(
+        fontFamily: fontMono,
+        fontSize: 12,
+        color: textSecondary,
+      ),
     ),
+
+    cardColor: surface,
+    cardTheme: CardTheme(
+      color: surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 2,
+    ),
+
+    inputDecorationTheme: const InputDecorationTheme(
+      filled: true,
+      fillColor: surface,
+      labelStyle: TextStyle(color: textSecondary),
+      border: OutlineInputBorder(
+        borderSide: BorderSide(color: accentRed, width: .8),
+        borderRadius: BorderRadius.all(Radius.circular(8)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: accentRed, width: 1.2),
+        borderRadius: BorderRadius.all(Radius.circular(8)),
+      ),
+    ),
+
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: accentRed,
-        foregroundColor: accentWhite,
-        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        foregroundColor: textPrimary,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        textStyle: const TextStyle(
+          fontFamily: fontMono,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     ),
-    inputDecorationTheme: const InputDecorationTheme(
-      labelStyle: TextStyle(color: greyText),
-      enabledBorder: UnderlineInputBorder(
-        borderSide: BorderSide(color: greyText),
-      ),
-      focusedBorder: UnderlineInputBorder(
-        borderSide: BorderSide(color: accentRed),
-      ),
+    floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      backgroundColor: accentRed,
+      foregroundColor: textPrimary,
+      shape: StadiumBorder(),
     ),
-    dropdownMenuTheme: DropdownMenuThemeData(
-      inputDecorationTheme: const InputDecorationTheme(
+
+    dropdownMenuTheme: const DropdownMenuThemeData(
+      menuStyle: MenuStyle(
+        backgroundColor: MaterialStatePropertyAll(surface),
+        elevation: MaterialStatePropertyAll(4),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: cardColor,
+        fillColor: surface,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+        ),
       ),
+    ),
+
+    snackBarTheme: const SnackBarThemeData(
+      backgroundColor: surface,
+      contentTextStyle: TextStyle(color: textPrimary, fontFamily: fontMono),
+      actionTextColor: accentRed,
     ),
   );
+
+  /* priority badge színek */
+  static Color importanceColor(String? imp) {
+    switch (imp) {
+      case 'high':
+        return accentYellow;
+      case 'low':
+        return accentGreen;
+      default:
+        return accentRed; // normal
+    }
+  }
 }
