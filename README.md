@@ -59,7 +59,7 @@ Cyber Notes mimics a bootable notes terminal with high-contrast visuals and pixe
 Clone the project:
 
 ```bash
-git clone https://github.com/your-username/cyber-notes.git
-cd cyber-notes
+git clone https://github.com/hunorszegedi/notes-app.git
+cd notes-app/frontend/frontend_flutter
 flutter pub get
 flutter run
